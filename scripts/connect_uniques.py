@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import sys
 
@@ -6,6 +6,15 @@ graph_file = sys.argv[1]
 forbidden_ends_file = sys.argv[2]
 resolving_paths_file = sys.argv[3]
 # graph to stdout
+
+def segment_length(split_line):
+	if split_line[2] != '*':
+		return len(split_line[2])
+	else:
+		for s in split_line:
+			if s.startswith("LN:i:"):
+				return int(s.split(":")[2])
+		assert(False)
 
 def revnode(n):
 	assert len(n) >= 2
@@ -52,6 +61,7 @@ sys.stderr.write(str(resolvable_ends) + "\n")
 sys.stderr.write(str(len(path_covered_nodes)) + " path covered nodes\n")
 
 node_seq = {}
+node_len = {}
 base_overlaps = {}
 
 with open(graph_file) as f:
@@ -59,13 +69,15 @@ with open(graph_file) as f:
 		parts = l.strip().split('\t')
 		if parts[0] == 'S':
 			node_seq[parts[1]] = parts[2]
+			node_len[parts[1]] = segment_len(parts)
 			if parts[1] in path_covered_nodes: continue
 		elif parts[0] == 'L':
 			check_from = (">" if parts[2] == "+" else "<") + parts[1]
 			check_to = ("<" if parts[4] == "+" else ">") + parts[3]
 			base_from = check_from.split('_')[0]
 			base_to = check_to.split('_')[0]
-			key = canontip(base_from, base_to)
+			#key = canontip(base_from, base_to)
+			key = canontip(check_from, check_to)
 			base_overlaps[key] = parts[5]
 			if check_from in resolvable_ends or check_to in resolvable_ends:
 				continue
@@ -94,8 +106,8 @@ with open(resolving_paths_file) as f:
 		for i in range(1, len(path)-1):
 			if path[i][1:] not in num_insertions: num_insertions[path[i][1:]] = 0
 			num_insertions[path[i][1:]] += 1
-			this_node = path[i][0] + path[i][1:] + "_" + str(num_insertions[path[i][1:]])
-			print("S\t" + this_node[1:] + "\t" + node_seq[path[i][1:]])
+			this_node = path[i][0] + path[i][1:] + "_i" + str(num_insertions[path[i][1:]])
+			print("S\t%s\t%s\tLN:i:%d" % (this_node[1:], node_seq[path[i][1:]], node_len[path[i][1:]]))
 			overlap = "0M"
 			key = canontip(path[i-1], revnode(path[i]))
 			assert key in base_overlaps
