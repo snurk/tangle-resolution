@@ -69,7 +69,7 @@ with open(graph_file) as f:
 		parts = l.strip().split('\t')
 		if parts[0] == 'S':
 			node_seq[parts[1]] = parts[2]
-			node_len[parts[1]] = segment_len(parts)
+			node_len[parts[1]] = segment_length(parts)
 			if parts[1] in path_covered_nodes: continue
 		elif parts[0] == 'L':
 			check_from = (">" if parts[2] == "+" else "<") + parts[1]
